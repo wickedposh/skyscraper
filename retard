@@ -1,0 +1,128 @@
+import numpy as np
+import copy
+val=[1,2,3,4,5,6]
+grid={'0':[0,0],'1':[0,1],'2':[0,2],'3':[0,3],'4':[0,4],'5':[0,5],'6':[0,5],'7':[1,5],'8':[2,5],'9':[3,5],'10':[4,5],'11':[5,5],
+          '12':[5,5],'13':[5,4],'14':[5,3],'15':[5,2],'16':[5,1],'17':[5,0],'18':[5,0],'19':[4,0],'20':[3,0],'21':[2,0],'22':[1,0],'23':[0,0]}
+consgrid={'0':[[0,0],[1,0],[2,0],[3,0],[4,0],[5,0]],'1':[[0,1],[1,1],[2,1],[3,1],[4,1],[5,1]], '2':[[0,2],[1,2],[2,2],[3,2],[4,2],[5,2]],
+          '3':[[0,3],[1,3],[2,3],[3,3],[4,3],[5,3]],'4':[[0,4],[1,4],[2,4],[3,4],[4,4],[5,4]], '5':[[0,5],[1,5],[2,5],[3,5],[4,5],[5,5]],
+          '6':[[0,5],[0,4],[0,3],[0,2],[0,1],[0,0]],'7':[[1,5],[1,4],[1,3],[1,2],[1,1],[1,0]], '8':[[2,5],[2,4],[2,3],[2,2],[2,1],[2,0]], 
+          '9':[[3,5],[3,4],[3,3],[3,2],[3,1],[3,0]],'10':[[4,5],[4,4],[4,3],[4,2],[4,1],[4,0]], '11':[[5,5],[5,4],[5,3],[5,2],[5,1],[5,0]],
+          '12':[[5,5],[4,5],[3,5],[2,5],[1,5],[0,5]],'13':[[5,4],[4,4],[3,4],[2,4],[1,4],[0,4]], '14':[[5,3],[4,3],[3,3],[2,3],[1,3],[0,3]],
+          '15':[[5,2],[4,2],[3,2],[2,2],[1,2],[0,2]],'16':[[5,1],[4,1],[3,1],[2,1],[1,1],[0,1]], '17':[[5,0],[4,0],[3,0],[2,0],[1,0],[0,0]],
+          '18':[[5,0],[5,1],[5,2],[5,3],[5,4],[5,5]],'19':[[4,0],[4,1],[4,2],[4,3],[4,4],[4,5]], '20':[[3,0],[3,1],[3,2],[3,3],[3,4],[3,5]],
+          '21':[[2,0],[2,1],[2,2],[2,3],[2,4],[2,5]],'22':[[1,0],[1,1],[1,2],[1,3],[1,4],[1,5]], '23':[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5]]}
+
+def test(solution,constraint):
+    for i in range(24):
+        a=consgrid[str(i)]
+        b=constraint[str(i)]
+        ss=0
+        if b!=0:
+            for j in range(len(a)):
+                if j==0:
+                    ss+=1
+                    maximum=solution[a[0][0]][a[0][1]]
+                elif solution[a[j][0]][a[j][1]]>maximum:
+                    ss+=1
+                    maximum=solution[a[j][0]][a[j][1]]
+                if maximum==6:
+                    break
+            if ss!=b:
+                return False,i,j
+    return True
+def get_empty(s):
+    l=[]
+    for i in range(6):
+        for j in range(6):
+            if s[i][j]==0:
+                l.append([i,j])
+    return l
+def cand(s,a,constraint):
+    l=[]
+    for i in range(6):
+        r,c=a[0],a[1]
+        l.append(s[r][i])
+        l.append(s[i][c])
+    l=list(set(val)-set(l))
+
+    return l
+            
+def solve_puzzle(clues):
+    constraint={}
+    solution=np.zeros((6,6))
+    num_six,six_row,six_column=0,[],[]
+    for i in range(len(clues)):
+        constraint[str(i)]=clues[i]
+        if constraint[str(i)]==1:
+            a,b=grid[str(i)][0],grid[str(i)][1]
+            solution[a][b]=6
+            six_row.append(a)
+            six_column.append(b)
+            num_six+=1
+    six_row,six_column=list(set(six_row)),list(set(six_column))
+    s=[]
+    six_candidates=[]
+        
+    for i in range(6):
+        if i not in six_row:
+            for j in range(6):
+                if j not in six_column:
+                    t=[key for key,value in consgrid.items() if [i,j] in value]
+                    if int(constraint[t[0]])<=(i+1):
+                        if int(constraint[t[1]])<=6-j:
+                            if int(constraint[t[2]])<=6-i:
+                                if int(constraint[t[3]])<=j+1:
+                                    six_candidates.append([i,j])
+    combinatorics=[]
+    for i in range(len(six_candidates)):
+        sss=[six_candidates[i]]
+        for j in range(len(six_candidates)):
+            if j!=i:
+                iii=0
+                for k in range(len(sss)):
+                    if sss[k][0]==six_candidates[j][0] or sss[k][1]==six_candidates[j][1]:
+                        break
+                    else:
+                        iii+=1
+                if iii==len(sss):
+                    sss.append(six_candidates[j])
+        if len(sss)==6-len(six_row):
+            rr=0
+            for i in range(len(combinatorics)):
+                hh=combinatorics[i]
+                for j in range(len(hh)):
+                    if sss[j] in hh:
+                        rr+=1
+            if rr<4:
+                combinatorics.append(sss)
+            
+    for i in range(len(combinatorics)):
+        sss=combinatorics[i]
+        
+        ss=solution.copy()
+            
+        for j in range(len(sss)):
+            ss[sss[j][0]][sss[j][1]]=6
+        s.append(ss.copy())
+    
+
+    
+    while len(s)!=0:
+        ss=s.pop(-1)
+        a=get_empty(ss)
+        print(len(a))
+        if len(a)==0:
+            print(ss)
+            if test(ss,constraint):
+                print( ss)
+                break
+        for i in range(len(a)):
+            candidates=cand(ss,a[i])
+            if len(candidates)==0:
+                break
+            else:
+                
+                for j in range(len(candidates)):
+                    b=copy.deepcopy(ss)
+                    b[a[i][0]][a[i][1]]=candidates[j]
+                    s.append(b)
